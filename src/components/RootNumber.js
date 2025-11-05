@@ -26,22 +26,17 @@ const RootNumber = ({ rootNr }) => {
           /* Container with 3D Effect */
           .root-number {
             width: 100%;
-            height: 50%;
+            height: 60%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20vh; /* Large text */
             font-weight: bold;
             text-align: center;
-            margin-left: 10px;
-            margin-right: 10px;
 
-            border-radius: 15px; /* More rounded corners */
-            background: linear-gradient(145deg, #28a745, #1e7e34); /* Gradient for 3D effect */
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4), /* Outer shadow */
-                        inset -5px -5px 10px rgba(255, 255, 255, 0.2), /* Inner glow */
-                        inset 5px 5px 10px rgba(0, 0, 0, 0.3); /* Inner shadow */
-            transition: transform 0.2s ease-in-out; /* Smooth hover effect */
+
+            border-radius: 15px; 
+            background: linear-gradient(145deg, #28a745, #1e7e34); 
+          
           }
 
           /* Improved Text Shadow Effect */
