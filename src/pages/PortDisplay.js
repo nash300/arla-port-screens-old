@@ -2,28 +2,24 @@
 PURPOSE:
 This is the page that the display screen shows.
 
-PARAMETERS 
-
-
 FUNCTIONALITY:
-* retrieves information to be displayed for the corresponding screen
-* Communicating with the database to get real-time change alerts to the table.
-* If no records for the screen are present in the database, outputs an image (default image)
-///////////////////////////////////////////////////////////////////////////////////////////*/
+* Retrieves information to be displayed for the corresponding port screen.
+* Communicates with Supabase for real-time updates.
+* If no records exist for that port, displays a default image.
+/////////////////////////////////////////////////////////////////////////////////////////// */
 
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import supabase from "../Utilities/supabase.js";
-import RootNumber from "../components/RootNumber.js";
+import { useParams } from "react-router-dom";
+import supabase from "../Utilities/supabase";
+import RootNumber from "../components/RootNumber";
 
 export default function PortDisplay() {
-  const location = useLocation();
-  const portNr = Number(location.state?.portNr);
+  const { portNr } = useParams();
+  const parsedPortNr = Number(portNr);
 
   const [portInfo, setPortInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [cowTrigger, setCowTrigger] = useState(0); // triggers cow animation every 10s
+  const [cowTrigger, setCowTrigger] = useState(0);
 
   const rotatingStyle = {
     animation: "rotateY360 6s ease-in-out infinite",
@@ -33,11 +29,8 @@ export default function PortDisplay() {
 
   const fetchPortData = async () => {
     setLoading(true);
-    setErrorMessage("");
-
     try {
-      if (!portNr || isNaN(portNr)) {
-        setErrorMessage("Invalid port number.");
+      if (!parsedPortNr || isNaN(parsedPortNr)) {
         setLoading(false);
         return;
       }
@@ -45,34 +38,23 @@ export default function PortDisplay() {
       const { data, error } = await supabase
         .from("Port_info")
         .select("*")
-        .eq("port_nr", portNr);
+        .eq("port_nr", parsedPortNr);
 
-      if (error) {
-        console.error("Supabase query error:", error);
-        setErrorMessage("Error fetching port data.");
-      } else {
-        setPortInfo(data.length > 0 ? data : null);
-
-        if (!data.some((item) => item.msg)) {
-          setPortInfo((prev) => prev?.map((item) => ({ ...item, msg: null })));
-        }
-      }
+      if (error) console.error("Supabase query error:", error);
+      else setPortInfo(data.length > 0 ? data : null);
     } catch (error) {
       console.error("Unexpected error:", error);
-      setErrorMessage("Failed to load port data.");
     } finally {
       setLoading(false);
     }
   };
 
-  // fetch port data on mount or portNr change
   useEffect(() => {
-    if (portNr) fetchPortData();
-  }, [portNr]);
+    if (parsedPortNr) fetchPortData();
+  }, [parsedPortNr]);
 
-  // subscribe to realtime updates
   useEffect(() => {
-    if (!portNr || isNaN(portNr)) return;
+    if (!parsedPortNr || isNaN(parsedPortNr)) return;
 
     const channel = supabase
       .channel("realtime-ports")
@@ -84,19 +66,18 @@ export default function PortDisplay() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, [portNr]);
+  }, [parsedPortNr]);
 
-  // trigger cow animation every 10 seconds
+  // Trigger cow animation every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCowTrigger((prev) => prev + 1);
-    }, 50000);
-
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="vh-100 d-flex flex-column">
+    <div className="vh-100 d-flex flex-column overflow-hidden">
       {/* Header */}
       <div
         className="bg-dark text-white d-flex align-items-center justify-content-center text-center"
@@ -113,13 +94,13 @@ export default function PortDisplay() {
             className="m-0 fw-bolder"
             style={{ fontSize: "calc(10vh + 2vw)", whiteSpace: "nowrap" }}
           >
-            PORT {portNr}
+            PORT {parsedPortNr}
           </h1>
         </div>
       </div>
 
       {/* Middle Section */}
-      <div className="d-flex flex-grow-1 justify-content-center">
+      <div className="d-flex flex-grow-1 justify-content-center position-relative">
         <div className="container-fluid h-100">
           <div className="row h-100 gap-2 justify-content-center">
             {loading ? (
@@ -136,10 +117,10 @@ export default function PortDisplay() {
                 />
                 <style>
                   {`
-                  @keyframes rotateY360 {
-                    from { transform: rotateY(0deg); }
-                    to { transform: rotateY(360deg); }
-                  }
+                    @keyframes rotateY360 {
+                      from { transform: rotateY(0deg); }
+                      to { transform: rotateY(360deg); }
+                    }
                   `}
                 </style>
               </div>
@@ -156,15 +137,19 @@ export default function PortDisplay() {
                       <div
                         className="bg-dark text-white p-3 rounded-top text-center fw-bold d-flex align-items-center justify-content-center"
                         style={{
-                          fontSize: "clamp(3rem, 5vw, 2rem)",
+                          fontSize: "2vw",
                           minHeight: "60px",
                         }}
                       >
                         {label}
                       </div>
                       <div
-                        className="shadow rounded-bottom text-center d-flex align-items-center justify-content-center h-100 animate-box"
-                        style={{ overflow: "hidden" }}
+                        className="rounded-bottom text-center d-flex align-items-center justify-content-center h-100 animate-box"
+                        style={{
+                          overflow: "hidden",
+                          boxShadow:
+                            "inset 1px 1px 20px rgba(184, 184, 184, 1)",
+                        }}
                       >
                         {value !== undefined && (
                           <div
@@ -196,6 +181,32 @@ export default function PortDisplay() {
           className="bg-warning text-white d-flex align-items-center justify-content-center text-center position-relative overflow-hidden"
           style={{ height: "15vh" }}
         >
+          {/* Running cow GIF */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "0",
+              left: "0",
+              width: "100%",
+              overflow: "hidden",
+              pointerEvents: "none",
+              height: "100%",
+            }}
+          >
+            <img
+              key={cowTrigger}
+              src="/running-cow.gif"
+              alt="Cow Animation"
+              style={{
+                position: "absolute",
+                left: "-20%",
+                height: "100%",
+                animation: "moveCow 7s linear 1",
+                zIndex: 9999,
+              }}
+            />
+          </div>
+
           {/* Message Text */}
           <div style={{ position: "relative", zIndex: 2 }}>
             <h1
@@ -206,27 +217,11 @@ export default function PortDisplay() {
             </h1>
           </div>
 
-          {/* Running cow GIF */}
-          <img
-            key={cowTrigger}
-            src="/running-cow.gif"
-            alt="Cow Animation"
-            className="moving-cow"
-            style={{
-              position: "absolute",
-              top: "40%",
-              left: "-200px",
-              height: "110%",
-              transform: "translateY(-50%)",
-              animation: "moveCow 6s linear 1",
-            }}
-          />
-
           <style>
             {`
               @keyframes moveCow {
-                0% { left: -100px; }
-                100% { left: 100%; }
+                0% { left: -20%; }
+                100% { left: 120%; }
               }
 
               @keyframes blinkEffect {

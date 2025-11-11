@@ -57,8 +57,7 @@ export default function LogInPage() {
               style={{ fontFamily: "'Syncopate', sans-serif" }}
             >
               InfoSync
-            </h3>{" "}
-            <p className="text-muted text-center">Logga in för att fortsätta</p>
+            </h3>
             <form onSubmit={handleLogin}>
               <div className="mb-3">
                 <label className="form-label">Användarnamn</label>
